@@ -3,7 +3,7 @@ package models
 // TransactionType - transation type
 type TransactionType string
 
-var (
+const (
 	// TransactionTypeWin - bet result
 	TransactionTypeWin TransactionType = "Win"
 	// TransactionTypeBet - making bet
@@ -12,9 +12,9 @@ var (
 
 // Transaction - transaction
 type Transaction struct {
-	ID     int
-	UserID int
-	Type   TransactionType
-	Amout  float64
-	Token  string
+	ID     uint64          `json:"transactionId"`
+	UserID uint64          `json:"userId"`
+	Type   TransactionType `json:"type"`
+	Amount float64         `json:"amount"`
+	Token  string          `json:"token"`
 }

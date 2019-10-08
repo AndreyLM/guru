@@ -38,7 +38,7 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := cache.Cache.AddUser(user); err != nil {
+	if err := cache.Storage.AddUser(user); err != nil {
 		errors.DebugPrintf(err)
 		writeJSONResponse(w, map[string]interface{}{"error": err.Error()})
 		return

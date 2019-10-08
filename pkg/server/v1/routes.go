@@ -10,5 +10,6 @@ func getRootRoutes() routes.Routes {
 		routes.Route{Name: "AddUser", Method: "POST", Pattern: "/user/create", HandlerFunc: handlers.AddUser},
 		routes.Route{Name: "GetUser", Method: "POST", Pattern: "/user/get", HandlerFunc: handlers.GetUser},
 		routes.Route{Name: "AddDeposit", Method: "POST", Pattern: "/user/deposit", HandlerFunc: handlers.AddDeposit},
+		routes.Route{Name: "Transaction", Method: "POST", Pattern: "/transaction", HandlerFunc: handlers.Transaction},
 	}
 }

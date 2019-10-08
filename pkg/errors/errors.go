@@ -20,6 +20,8 @@ var (
 	InvalidTokenError = GenerateError("invalid or missing token")
 	// InvalidDataError - internal server error
 	InvalidDataError = GenerateError("invalid or missing data")
+	// InvalidChangesTypeError - internal server error
+	InvalidChangesTypeError = GenerateError("invalid type of changes")
 )
 
 // GenerateError - generates error
