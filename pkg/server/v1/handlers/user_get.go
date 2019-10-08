@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/andreylm/guru/pkg/cache"
+	"github.com/andreylm/guru/pkg/db"
 	"github.com/andreylm/guru/pkg/errors"
 )
 
@@ -15,33 +16,35 @@ type GetUserForm struct {
 }
 
 // GetUser - creating new user
-func GetUser(w http.ResponseWriter, r *http.Request) {
-	var form GetUserForm
-	decoder := json.NewDecoder(r.Body)
+func GetUser(dbStorage db.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var form GetUserForm
+		decoder := json.NewDecoder(r.Body)
 
-	if err := decoder.Decode(&form); err != nil {
-		errors.DebugPrintf(err)
-		writeJSONResponse(w, map[string]interface{}{"error": errors.InternalServerError.Error()})
-		return
+		if err := decoder.Decode(&form); err != nil {
+			errors.DebugPrintf(err)
+			writeJSONResponse(w, map[string]interface{}{"error": errors.InternalServerError.Error()})
+			return
+		}
+
+		if !validateToken(form.Token) {
+			writeJSONResponse(w, map[string]interface{}{"error": errors.InvalidTokenError.Error()})
+			return
+		}
+
+		if !validateGetUserForm(&form) {
+			writeJSONResponse(w, map[string]interface{}{"error": errors.InvalidDataError.Error()})
+			return
+		}
+
+		info, err := getUserInfo(&form)
+		if err != nil {
+			writeJSONResponse(w, map[string]interface{}{"error": err.Error()})
+			return
+		}
+
+		writeJSONResponse(w, info)
 	}
-
-	if !validateToken(form.Token) {
-		writeJSONResponse(w, map[string]interface{}{"error": errors.InvalidTokenError.Error()})
-		return
-	}
-
-	if !validateGetUserForm(&form) {
-		writeJSONResponse(w, map[string]interface{}{"error": errors.InvalidDataError.Error()})
-		return
-	}
-
-	info, err := getUserInfo(&form)
-	if err != nil {
-		writeJSONResponse(w, map[string]interface{}{"error": err.Error()})
-		return
-	}
-
-	writeJSONResponse(w, info)
 }
 
 func validateGetUserForm(form *GetUserForm) bool {

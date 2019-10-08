@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/andreylm/guru/pkg/cache"
+	"github.com/andreylm/guru/pkg/db"
 	"github.com/andreylm/guru/pkg/errors"
 	"github.com/andreylm/guru/pkg/models"
 )
@@ -17,34 +18,39 @@ type CreateUserForm struct {
 }
 
 // AddUser - creating new user
-func AddUser(w http.ResponseWriter, r *http.Request) {
-	var form CreateUserForm
-	decoder := json.NewDecoder(r.Body)
+func AddUser(dbStorage db.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var form CreateUserForm
+		decoder := json.NewDecoder(r.Body)
 
-	if err := decoder.Decode(&form); err != nil {
-		errors.DebugPrintf(err)
-		writeJSONResponse(w, map[string]interface{}{"error": errors.InternalServerError.Error()})
-		return
+		if err := decoder.Decode(&form); err != nil {
+			errors.DebugPrintf(err)
+			writeJSONResponse(w, map[string]interface{}{"error": errors.InternalServerError.Error()})
+			return
+		}
+
+		if !validateToken(form.Token) {
+			writeJSONResponse(w, map[string]interface{}{"error": errors.InvalidTokenError.Error()})
+			return
+		}
+
+		user, err := getUserModel(&form)
+		if err != nil {
+			writeJSONResponse(w, map[string]interface{}{"error": err.Error()})
+			return
+		}
+
+		if err := cache.Storage.AddUser(user); err != nil {
+			errors.DebugPrintf(err)
+			writeJSONResponse(w, map[string]interface{}{"error": err.Error()})
+			return
+		}
+
+		// Some logic saving user
+		dbStorage.SaveUser(user)
+
+		writeJSONResponse(w, map[string]interface{}{"error": ""})
 	}
-
-	if !validateToken(form.Token) {
-		writeJSONResponse(w, map[string]interface{}{"error": errors.InvalidTokenError.Error()})
-		return
-	}
-
-	user, err := getUserModel(&form)
-	if err != nil {
-		writeJSONResponse(w, map[string]interface{}{"error": err.Error()})
-		return
-	}
-
-	if err := cache.Storage.AddUser(user); err != nil {
-		errors.DebugPrintf(err)
-		writeJSONResponse(w, map[string]interface{}{"error": err.Error()})
-		return
-	}
-
-	writeJSONResponse(w, map[string]interface{}{"error": ""})
 }
 
 func getUserModel(form *CreateUserForm) (*models.User, error) {

@@ -27,6 +27,7 @@ func init() {
 		users:         make(map[uint64]*models.User),
 		modifiedUsers: make(map[uint64]*models.User),
 		statistics:    make(map[uint64]*models.Statistics),
+		transactions:  make(map[uint64]*models.Transaction),
 	}
 }
 
@@ -35,6 +36,7 @@ type cache struct {
 	modifiedUsers map[uint64]*models.User
 	users         map[uint64]*models.User
 	statistics    map[uint64]*models.Statistics
+	transactions  map[uint64]*models.Transaction
 }
 
 func (c *cache) AddUser(user *models.User) error {

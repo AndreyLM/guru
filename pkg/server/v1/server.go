@@ -1,10 +1,14 @@
 package v1
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/andreylm/guru/pkg/cache"
+	"github.com/andreylm/guru/pkg/db"
 
 	"github.com/gorilla/mux"
 
@@ -15,6 +19,7 @@ import (
 type Server struct {
 	port   string
 	router *mux.Router
+	db     db.Storage
 }
 
 // NewServer - creates server
@@ -22,6 +27,7 @@ func NewServer(port string) Server {
 	return Server{
 		port:   port,
 		router: mux.NewRouter().StrictSlash(true),
+		db:     db.NewMockStorage(),
 	}
 }
 
@@ -33,7 +39,7 @@ func (s *Server) Start() {
 	handler := handlers.LoggingHandler(os.Stdout, handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),
 		handlers.AllowedMethods([]string{"GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"}),
-		handlers.AllowedHeaders([]string{"Content-Type", "Origin", "Cache-Control", "X-App-Token"}),
+		handlers.AllowedHeaders([]string{"Content-Type", "Origin", "Cache-Control"}),
 		handlers.ExposedHeaders([]string{"*"}),
 		handlers.MaxAge(1000),
 		handlers.AllowCredentials(),
@@ -47,13 +53,29 @@ func (s *Server) Start() {
 		ReadTimeout:  15 * time.Second,
 	}
 
+	ticker := time.NewTicker(10 * time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				updateUsers(s.db)
+			}
+		}
+	}()
+
 	if err := newServer.ListenAndServe(); err != nil {
-		log.Fatal(err)
+		cancel()
+		log.Println(err)
 	}
 }
 
 func (s *Server) init() {
-	rootRoutes := getRootRoutes()
+	rootRoutes := getRootRoutes(s.db)
 
 	for _, route := range rootRoutes {
 		s.router.
@@ -62,4 +84,13 @@ func (s *Server) init() {
 			Name(route.Name).
 			Handler(route.HandlerFunc)
 	}
+}
+
+func updateUsers(dbStorage db.Storage) {
+	for _, user := range cache.Storage.GetModifiedUsers() {
+		log.Println("Saving user", user.ID)
+		dbStorage.SaveUser(user)
+	}
+
+	cache.Storage.ClearModifiedUserCollection()
 }
