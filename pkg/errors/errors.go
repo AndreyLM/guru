@@ -12,8 +12,14 @@ var (
 	UserExistError = GenerateError("Cannot create user. Already exist")
 	// UserNotExistError - user not exist error
 	UserNotExistError = GenerateError("User does not exist")
+	// UserStatisticsNotExistError - internal server error
+	UserStatisticsNotExistError = GenerateError("User statistics do not exist")
 	// InternalServerError - internal server error
 	InternalServerError = GenerateError("internal server error")
+	// InvalidTokenError - internal server error
+	InvalidTokenError = GenerateError("invalid or missing token")
+	// InvalidDataError - internal server error
+	InvalidDataError = GenerateError("invalid or missing data")
 )
 
 // GenerateError - generates error

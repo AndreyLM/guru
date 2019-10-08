@@ -26,7 +26,7 @@ func NewServer(port string) Server {
 }
 
 // Start - start server
-func (s *Server) Start() error {
+func (s *Server) Start() {
 	log.Println("Starting server on port", s.port)
 	s.init()
 
@@ -42,12 +42,14 @@ func (s *Server) Start() error {
 
 	newServer := &http.Server{
 		Handler:      handler,
-		Addr:         "0.0.0.0" + s.port,
+		Addr:         "0.0.0.0:" + s.port,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 
-	return newServer.ListenAndServe()
+	if err := newServer.ListenAndServe(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (s *Server) init() {

@@ -13,14 +13,14 @@ var Cache cache
 func init() {
 	Cache = cache{
 		users:      make(map[uint64]*models.User),
-		statistics: make(map[uint64]*models.User),
+		statistics: make(map[uint64]*models.Statistics),
 	}
 }
 
 type cache struct {
 	mu         sync.Mutex
 	users      map[uint64]*models.User
-	statistics map[uint64]*models.User
+	statistics map[uint64]*models.Statistics
 }
 
 func (c *cache) AddUser(user *models.User) error {
@@ -41,4 +41,14 @@ func (c *cache) GetUser(id uint64) (*models.User, error) {
 	}
 
 	return nil, errors.UserNotExistError
+}
+
+func (c *cache) GetUserStatistics(id uint64) (*models.Statistics, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if statistics, ok := c.statistics[id]; ok {
+		return statistics, nil
+	}
+
+	return nil, errors.UserStatisticsNotExistError
 }
